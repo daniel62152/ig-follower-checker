@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Followings vs. Followers Comparator</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; }
+        .instructions ol { padding-left: 20px; }
+        .instructions li { margin-bottom: 10px; }
+        textarea { width: 600px; max-width: 100%; }
+        /* Changed from pre to div, so styling for pre might not apply directly anymore.
+           If specific pre-formatting is needed, consider adding a class to the div. */
+        #result { background-color: #f0f0f0; padding: 10px; border: 1px solid #ddd; word-wrap: break-word; }
+        button { padding: 10px 15px; margin-top: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Followings vs. Followers Comparator</h1>
+
+    <div class="instructions">
+        <h2>Instructions to get your Instagram Lists:</h2>
+        <ol>
+            <li>Open <a href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank">https://accountscenter.instagram.com/info_and_permissions/dyi/</a></li>
+            <li>Click "Download or transfer information"</li>
+            <li>Select your Instagram account</li>
+            <li>Select "Some of your information"</li>
+            <li>Select "Followers and following" in the "Connections" section</li>
+            <li>Click "Next"</li>
+            <li>Click "Download to device"</li>
+            <li>Choose your desired date range</li>
+            <li>Click "Create files"</li>
+            <li>In a few minutes, a notification will arrive to your email when the files are ready to be downloaded</li>
+            <li>Follow the instructions in the email and download the files</li>
+            <li>When you open the downloaded folder, navigate to "connections", then open "followers_and_followings". You'll find multiple files, including "followers_1.html" and "following.html"</li>
+            <li>Open <a href="https://cloudconvert.com/html-to-txt" target="_blank">https://cloudconvert.com/html-to-txt</a> and upload those two HTML files to convert them to TXT files.</li>
+            <li>Download them when ready</li>
+            <li>Now open the TXT files and copy the whole text from each</li>
+            <li>Paste each text into the corresponding list boxes below in this program</li>
+            <li>Click "Find Non-Followers Back"</li>
+            <li>This will create a list of all the Instagram profiles that you follow who don't follow you back</li>
+            <li>Click on "Copy All Links"</li>
+            <li>Open <a href="https://www.openmultipleurl.com/" target="_blank">https://www.openmultipleurl.com/</a></li>
+            <li>Paste the list of Instagram profile links into the box</li>
+            <li>Click "Go now"</li>
+            <li>If this is the first time doing this, only the first link will open because pop-ups are likely blocked. Open the page again and you have to always allow pop-ups to open. You can usually do this in the address bar on the right side.</li>
+            <li>Now if you click "Go now" again, all the Instagram profiles should open in new tabs. <strong style="color: red;">WARNING: Opening a very large number of links simultaneously might cause your browser or computer to lag significantly or even crash. Please be careful with very big lists!</strong></li>
+        </ol>
+    </div>
+
+    <label for="followings">Your Following List:</label>
+    <textarea id="followings" rows="15" cols="70" placeholder="Paste your 'following' list here (usernames and dates alternating)"></textarea><br><br>
+    <label for="followers">Your Followers List:</label>
+    <textarea id="followers" rows="15" cols="70" placeholder="Paste your 'followers' list here (usernames and dates alternating)"></textarea><br><br>
+    <button onclick="processInputs()">Find Non-Followers Back</button>
+    <h3>Users you follow who don't follow you back:</h3>
+    <button onclick="copyLinks()">Copy All Links</button>
+    <div id="result"></div> <script>
+        function processInputs() {
+            // Regular expression to match the date format "Mon DD, YYYY HH:MM am/pm"
+            const datePattern = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},\s\d{4}\s\d{1,2}:\d{2}\s(am|pm)$/i;
+
+            // Helper function to parse and clean the input lists
+            function cleanList(inputText, listType) { // Added listType parameter
+                let lines = inputText
+                    .split('\n') // Split by new line
+                    .map(line => line.trim()) // Trim whitespace from each line
+                    .filter(line => line !== '') // Remove empty lines
+                    .filter(line => !datePattern.test(line)); // Remove lines that match the date pattern
+
+                // Remove specific headers based on list type
+                if (listType === 'following') {
+                    lines = lines.filter(line =>
+                        line.toLowerCase() !== 'following' && // Case-insensitive check
+                        line.toLowerCase() !== 'profiles you choose to see content from' // Case-insensitive check
+                    );
+                } else if (listType === 'followers') {
+                    lines = lines.filter(line => line.toLowerCase() !== 'followers'); // Case-insensitive check
+                }
+                return lines;
+            }
+
+            // Get values from the textarea fields and clean them, passing the list type
+            const followingsList = cleanList(document.getElementById('followings').value, 'following');
+            const followersList = cleanList(document.getElementById('followers').value, 'followers');
+
+            // Create a Set from the cleaned followers list for efficient lookup
+            const followersSet = new Set(followersList);
+
+            // Filter the cleaned followings list to find users who are not in the followers list
+            const notFollowingBack = followingsList.filter(following => !followersSet.has(following));
+
+            // Prepare the result string or HTML
+            let resultContent;
+            if (notFollowingBack.length > 0) {
+                // Map each username to an anchor tag (link)
+                resultContent = notFollowingBack
+                    .map(username => `<a href="https://www.instagram.com/${username}" target="_blank">${username}</a>`)
+                    .join('<br>'); // Join with <br> for HTML line breaks
+            } else {
+                resultContent = "Everyone you follow also follows you back! Or the lists are empty/incorrect.";
+            }
+
+            // Display the result in the <div> tag
+            document.getElementById('result').innerHTML = resultContent; // Use innerHTML for rendering links
+        }
+
+        // Function to copy the links to the clipboard
+        function copyLinks() {
+            const resultElement = document.getElementById('result');
+            // When copying, we want the raw URLs, not the HTML structure.
+            // So, we'll extract them from the innerHTML by looking for href attributes.
+            const links = Array.from(resultElement.querySelectorAll('a')).map(a => a.href);
+            const textToCopy = links.join('\n');
+
+
+            if (textToCopy === "" || resultElement.textContent.startsWith("Everyone you follow")) {
+                alert("Nothing to copy or no results found yet!");
+                return;
+            }
+
+            // Use the Clipboard API to copy text
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    alert("Links copied to clipboard!");
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    alert("Failed to copy links. Please try again or copy manually.");
+                });
+        }
+    </script>
+</body>
+</html>
